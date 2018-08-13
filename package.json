@@ -1,0 +1,14 @@
+{
+  "name": "file-sizes",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "John Bowden",
+  "license": "ISC",
+  "dependencies": {
+    "opn": "^5.3.0"
+  }
+}

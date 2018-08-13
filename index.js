@@ -1,0 +1,127 @@
+const fs = require('fs');
+const path = require('path');
+const opn = require('opn');
+
+let _lowerLimit, _upperLimit, _preview, _weblocation, _srclocation, _terminal, _data;
+
+if (process.argv[2]) {
+  [_lowerLimit, _upperLimit] = (process.argv[2] || '0-0').split('-');
+  _upperLimit = _upperLimit || _lowerLimit;
+
+  _preview = process.argv[3] === '-p';
+
+  _srclocation = process.argv[4];
+  _weblocation = process.argv[5];
+
+  _terminal = true;
+
+  _data = [];
+}
+
+if (_weblocation && _srclocation && _lowerLimit != 0) {
+  console.log(`Calculating sizes...`);
+  console.log(`src: ${_srclocation}`);
+  console.log(`web: ${_weblocation}`);
+  start();
+}
+
+function entry (options = {}) {
+  const {src, web, limit, preview, terminal} = options;
+  _weblocation = web;
+  _srclocation = src;
+  [_lowerLimit, _upperLimit] = limit.split('-');
+  _upperLimit = _upperLimit || _lowerLimit;
+  _preview = preview;
+  _terminal = terminal;
+  _data = [];
+  if (!_weblocation || !_srclocation || !_lowerLimit) return;
+  return start();
+}
+
+async function start () {
+  try {
+    await read(_srclocation);
+    if (_preview) {
+      preview(0);
+    }
+  } catch (e) {
+    console.log(`Error: ${e.message}`);
+  } finally {
+    return _data;
+  }
+}
+
+function preview (index) {
+  if (index >= _data.length) return;
+  const file = _data[index].file;
+  Promise.all([
+    opn(`${_srclocation}${file}`, {wait: true}),
+    opn(`${_weblocation}${file}`, {wait: true})
+  ]).then(() => {
+    preview(index + 1);
+  });
+}
+
+async function read (loc) {
+  const p = new Promise(async (resolve, reject) => {
+    const files = await readDir(loc);
+    let count = files.length;
+    files.forEach(async (file, index, array) => {
+      const fullPath = path.join(loc, file);
+      const result = await stats(fullPath);
+      if (result.file) {
+        await processFile(fullPath, result);
+      } else if (result.directory) {
+        await read(fullPath);
+      } else {
+        throw new Error('Neither file nor directory...');
+      }
+      count--;
+      if (count === 0) resolve()
+    });
+  });
+  return p;
+}
+
+async function processFile (fullPath, result) {
+  const size = Math.round(result.size / 1024);
+  if (/\.(jpeg|jpg|png)$/.test(fullPath) && size >= _lowerLimit && size <= _upperLimit) {
+    const srcfile = fullPath.replace(_srclocation, '');
+    const webfile = path.join(_weblocation, srcfile);
+    const webstats = await stats(webfile);
+    const websize = Math.round(webstats.size / 1024);
+    const percent = Math.round(websize / size * 100);
+    if (_terminal) console.log(`${size} - ${websize} - ${percent}%`, srcfile);
+    _data.push({size, websize, percent, file: srcfile});
+  }
+}
+
+async function stats (arg) {
+  const p = new Promise((resolve, reject) => {
+    fs.stat(arg, (err, stat) => {
+      if (err || typeof stat == 'undefined') reject({err: err || 'no stats.'});
+      resolve({
+        file: stat.isFile(),
+        directory: stat.isDirectory(),
+        size: stat.isFile() ? stat.size : '-'
+      });
+    });
+  });
+  return p;
+}
+
+function readDir (dir) {
+  const p = new Promise((resolve, reject) => {
+    fs.readdir(dir, (err, files) => {
+      if (err) reject({err});
+      resolve(files);
+    });
+  });
+  return p;
+}
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.log('Unhandled Rejection at:', reason.stack || reason)
+});
+
+module.exports = entry;
