@@ -1,12 +1,16 @@
 {
-  "name": "file-sizes",
+  "name": "image-optimization-comparator",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JJB1980/image-optimization-comparator.git"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "John Bowden",
+  "author": "John Bowden <j.j.b1980@live.com>",
   "license": "ISC",
   "dependencies": {
     "opn": "^5.3.0"
