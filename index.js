@@ -8,14 +8,10 @@ let _lowerLimit, _upperLimit, _preview, _weblocation, _srclocation, _terminal, _
 if (process.argv[2]) {
   [_lowerLimit, _upperLimit] = (process.argv[2] || '0-0').split('-');
   _upperLimit = _upperLimit || _lowerLimit;
-
   _preview = process.argv[3] === '-p';
-
   _srclocation = process.argv[4];
   _weblocation = process.argv[5];
-
   _terminal = true;
-
   _data = [];
 }
 
@@ -64,7 +60,7 @@ function preview (index) {
 }
 
 async function read (loc) {
-  const p = new Promise(async (resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const files = await readDir(loc);
     let count = files.length;
     files.forEach(async (file, index, array) => {
@@ -81,7 +77,6 @@ async function read (loc) {
       if (count === 0) resolve()
     });
   });
-  return p;
 }
 
 async function processFile (fullPath, result) {
@@ -105,7 +100,7 @@ function pad (arg, len) {
 }
 
 function stats (arg) {
-  const p = new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     fs.stat(arg, (err, stat) => {
       if (err || typeof stat == 'undefined') reject({err: err || 'no stats.'});
       resolve({
@@ -115,7 +110,6 @@ function stats (arg) {
       });
     });
   });
-  return p;
 }
 
 function difference (src, web) {
@@ -127,13 +121,12 @@ function difference (src, web) {
 }
 
 function readDir (dir) {
-  const p = new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     fs.readdir(dir, (err, files) => {
       if (err) reject({err});
       resolve(files);
     });
   });
-  return p;
 }
 
 process.on('unhandledRejection', (reason, promise) => {
