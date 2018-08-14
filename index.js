@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const opn = require('opn');
+const resemble = require('resemblejs');
 
 let _lowerLimit, _upperLimit, _preview, _weblocation, _srclocation, _terminal, _data;
 
@@ -91,12 +92,19 @@ async function processFile (fullPath, result) {
     const webstats = await stats(webfile);
     const websize = Math.round(webstats.size / 1024);
     const percent = Math.round(websize / size * 100);
-    if (_terminal) console.log(`${size} - ${websize} - ${percent}%`, srcfile);
+    const diff = await difference(fullPath, webfile);
+    if (_terminal) {
+      console.log(`${pad(size, 3)}  ${pad(websize, 3)}  ${pad(percent, 2)}%  ${pad(diff, 4)}`, srcfile);
+    }
     _data.push({size, websize, percent, file: srcfile});
   }
 }
 
-async function stats (arg) {
+function pad (arg, len) {
+  return arg.toString().padStart(len, ' ');
+}
+
+function stats (arg) {
   const p = new Promise((resolve, reject) => {
     fs.stat(arg, (err, stat) => {
       if (err || typeof stat == 'undefined') reject({err: err || 'no stats.'});
@@ -108,6 +116,14 @@ async function stats (arg) {
     });
   });
   return p;
+}
+
+function difference (src, web) {
+  return new Promise((resolve, reject) => {
+    resemble(src).compareTo(web).onComplete(data => {
+      resolve(data.misMatchPercentage);
+    })
+  });
 }
 
 function readDir (dir) {
