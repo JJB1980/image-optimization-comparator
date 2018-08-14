@@ -63,6 +63,7 @@ function terminal () {
   _data.forEach(({size, websize, percent, diff, file}) => {
     console.log(`${pad(size, 3)}  ${pad(websize, 3)}  ${pad(percent, 2)}%  ${pad(diff, 4)}`, file);
   });
+  console.log(`${_data.length} files Complete.`);
 }
 
 function preview (index) {
@@ -105,10 +106,7 @@ async function processFile (fullPath, result) {
     const websize = Math.round(webstats.size / 1024);
     const percent = Math.round(websize / size * 100);
     const diff = await difference(fullPath, webfile);
-    if (_terminal) {
-      console.log(`${pad(size, 3)}  ${pad(websize, 3)}  ${pad(percent, 2)}%  ${pad(diff, 4)}`, srcfile);
-    }
-    _data.push({size, websize, percent, file: srcfile});
+    _data.push({size, websize, percent, diff, file: srcfile});
   }
 }
 
