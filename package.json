@@ -9,6 +9,7 @@
   "author": "John Bowden",
   "license": "ISC",
   "dependencies": {
-    "opn": "^5.3.0"
+    "opn": "^5.3.0",
+    "resemblejs": "^2.10.3"
   }
 }
