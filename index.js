@@ -37,15 +37,32 @@ function entry (options = {}) {
 
 async function start () {
   try {
+    if (_terminal) console.log('Calculating...');
     await read(_srclocation);
-    if (_preview) {
-      preview(0);
-    }
+    _data = sort();
+    if (_preview) preview(0);
+    if (_terminal) terminal();
   } catch (e) {
     console.log(`Error: ${e.message}`);
   } finally {
     return _data;
   }
+}
+
+function sort () {
+  return _data.sort((a, b) => {
+    const [,value1] = a.file.split('/');
+    const [,value2] = b.file.split('/');
+    if (value1 < value2) return -1;
+    if (value1 > value2) return 1;
+    return 0;
+  });
+}
+
+function terminal () {
+  _data.forEach(({size, websize, percent, diff, file}) => {
+    console.log(`${pad(size, 3)}  ${pad(websize, 3)}  ${pad(percent, 2)}%  ${pad(diff, 4)}`, file);
+  });
 }
 
 function preview (index) {
