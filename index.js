@@ -40,8 +40,8 @@ async function start () {
     if (_terminal) console.log('Calculating...');
     await read(_srclocation);
     _data = sort();
-    if (_preview) preview(0);
     if (_terminal) terminal();
+    if (_preview) preview(0);
   } catch (e) {
     console.log(`Error: ${e.message}`);
   } finally {

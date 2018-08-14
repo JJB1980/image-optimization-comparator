@@ -4,8 +4,8 @@ start();
 
 async function start () {
   const data = await entry({
-    web: '/Users/john/grit/github.cwx.io/poker/webclient-themes/web/casino',
-    src: '/Users/john/grit/github.cwx.io/poker/webclient-themes/src/assets/casino',
+    web: '/src/images',
+    src: '/web/images',
     limit: '420-500',
     terminal: false,
     preview: false
