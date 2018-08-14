@@ -1,20 +1,17 @@
 const fs = require('fs');
 const path = require('path');
 const opn = require('opn');
+const resemble = require('resemblejs');
 
 let _lowerLimit, _upperLimit, _preview, _weblocation, _srclocation, _terminal, _data;
 
 if (process.argv[2]) {
   [_lowerLimit, _upperLimit] = (process.argv[2] || '0-0').split('-');
   _upperLimit = _upperLimit || _lowerLimit;
-
   _preview = process.argv[3] === '-p';
-
   _srclocation = process.argv[4];
   _weblocation = process.argv[5];
-
   _terminal = true;
-
   _data = [];
 }
 
@@ -40,15 +37,33 @@ function entry (options = {}) {
 
 async function start () {
   try {
+    if (_terminal) console.log('Calculating...');
     await read(_srclocation);
-    if (_preview) {
-      preview(0);
-    }
+    _data = sort();
+    if (_terminal) terminal();
+    if (_preview) preview(0);
   } catch (e) {
     console.log(`Error: ${e.message}`);
   } finally {
     return _data;
   }
+}
+
+function sort () {
+  return _data.sort((a, b) => {
+    const [,value1] = a.file.split('/');
+    const [,value2] = b.file.split('/');
+    if (value1 < value2) return -1;
+    if (value1 > value2) return 1;
+    return 0;
+  });
+}
+
+function terminal () {
+  _data.forEach(({size, websize, percent, diff, file}) => {
+    console.log(`${pad(size, 3)}  ${pad(websize, 3)}  ${pad(percent, 2)}%  ${pad(diff, 4)}`, file);
+  });
+  console.log(`${_data.length} files Complete.`);
 }
 
 function preview (index) {
@@ -63,7 +78,7 @@ function preview (index) {
 }
 
 async function read (loc) {
-  const p = new Promise(async (resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const files = await readDir(loc);
     let count = files.length;
     files.forEach(async (file, index, array) => {
@@ -80,7 +95,6 @@ async function read (loc) {
       if (count === 0) resolve()
     });
   });
-  return p;
 }
 
 async function processFile (fullPath, result) {
@@ -91,13 +105,17 @@ async function processFile (fullPath, result) {
     const webstats = await stats(webfile);
     const websize = Math.round(webstats.size / 1024);
     const percent = Math.round(websize / size * 100);
-    if (_terminal) console.log(`${size} - ${websize} - ${percent}%`, srcfile);
-    _data.push({size, websize, percent, file: srcfile});
+    const diff = await difference(fullPath, webfile);
+    _data.push({size, websize, percent, diff, file: srcfile});
   }
 }
 
-async function stats (arg) {
-  const p = new Promise((resolve, reject) => {
+function pad (arg, len) {
+  return arg.toString().padStart(len, ' ');
+}
+
+function stats (arg) {
+  return new Promise((resolve, reject) => {
     fs.stat(arg, (err, stat) => {
       if (err || typeof stat == 'undefined') reject({err: err || 'no stats.'});
       resolve({
@@ -107,17 +125,23 @@ async function stats (arg) {
       });
     });
   });
-  return p;
+}
+
+function difference (src, web) {
+  return new Promise((resolve, reject) => {
+    resemble(src).compareTo(web).onComplete(data => {
+      resolve(data.misMatchPercentage);
+    })
+  });
 }
 
 function readDir (dir) {
-  const p = new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     fs.readdir(dir, (err, files) => {
       if (err) reject({err});
       resolve(files);
     });
   });
-  return p;
 }
 
 process.on('unhandledRejection', (reason, promise) => {
