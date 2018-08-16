@@ -82,6 +82,6 @@ describe('api', () => {
 
   it('should return folders', async () => {
     const result = await api.readDir(options.src);
-    expect(result.length).to.equal(3);
+    expect(result.length).to.equal(2);
   });
 });
