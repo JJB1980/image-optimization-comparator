@@ -2,40 +2,35 @@ const fs = require('fs');
 const path = require('path');
 const opn = require('opn');
 const resemble = require('resemblejs');
-
-let _lowerLimit, _upperLimit, _preview, _weblocation, _srclocation, _terminal, _data;
+const colors = require('colors');
 
 const isTest = process.env.NODE_ENV === 'test';
 
 function entry (options) {
-  const {src, web, limit, preview, terminal} = options;
-  _weblocation = web;
-  _srclocation = src;
-  [_lowerLimit, _upperLimit] = limit.split('-');
-  _upperLimit = _upperLimit || _lowerLimit;
-  _preview = preview;
-  _terminal = terminal;
-  _data = [];
-  if (!_weblocation || !_srclocation || !_lowerLimit) return;
-  return start();
+  const {src, web, limit} = options;
+  let [lower, upper] = limit.split('-');
+  upper = upper || lower;
+  if (!src || !web || !lower) return;
+  return start(Object.assign(options, {lower, upper}));
 }
 
-async function start () {
+async function start (options) {
+  let sorted = null;
   try {
-    if (_terminal) console.log('Calculating...');
-    await read(_srclocation);
-    _data = sort();
-    if (_terminal) terminal();
-    if (_preview) preview(0);
+    if (options.terminal) console.log('Processing...');
+    const data = await read(options.src, options);
+    sorted = sort(data);
+    if (options.terminal) terminal(sorted);
+    if (options.preview) preview(0, sorted, options);
   } catch (e) {
-    console.log(`Error: ${e.message}`);
+    console.log(e);
   } finally {
-    return _data;
+    return sorted;
   }
 }
 
-function sort () {
-  return _data.sort((a, b) => {
+function sort (data) {
+  return data.sort((a, b) => {
     const [,value1] = a.file.split('/');
     const [,value2] = b.file.split('/');
     if (value1 < value2) return -1;
@@ -44,55 +39,58 @@ function sort () {
   });
 }
 
-function terminal () {
-  _data.forEach(({size, websize, percent, diff, file}) => {
-    console.log(`${pad(size, 3)}  ${pad(websize, 3)}  ${pad(percent, 2)}%  ${pad(diff, 4)}`, file);
+function terminal (data) {
+  data.forEach(({size, websize, percent, diff, file}) => {
+    console.log(`${pad(size, 3).yellow}  ${pad(websize, 3).blue}  ${`${pad(percent, 2)}%`.cyan}  ${pad(diff, 4).red} ${file.green}`);
   });
-  console.log(`${_data.length} files Complete.`);
+  console.log(`${data.length} files found.`);
 }
 
-function preview (index) {
-  if (index >= _data.length) return;
-  const file = _data[index].file;
+function preview (index, data, options) {
+  if (index >= data.length) return;
+  const {src, web} = options;
+  const {file} = data[index];
   Promise.all([
-    isTest ? Promise.resolve(true) : opn(`${_srclocation}${file}`, {wait: true}),
-    isTest ? Promise.resolve(true) : opn(`${_weblocation}${file}`, {wait: true})
+    isTest ? Promise.resolve(true) : opn(`${src}${file}`, {wait: true}),
+    isTest ? Promise.resolve(true) : opn(`${web}${file}`, {wait: true})
   ]).then(() => {
-    preview(index + 1);
+    preview(index + 1, data, options);
   });
 }
 
-async function read (loc) {
+async function read (loc, options) {
+  let data = [];
   return new Promise(async (resolve, reject) => {
     const files = await readDir(loc);
     let count = files.length;
     files.forEach(async (file, index, array) => {
       const fullPath = path.join(loc, file);
-      const result = await stats(fullPath);
-      if (result.file) {
-        await processFile(fullPath, result);
-      } else if (result.directory) {
-        await read(fullPath);
-      } else {
-        reject({err: 'NA'});
+      const statsResult = await stats(fullPath);
+      if (statsResult.file) {
+        const result = await processFile(fullPath, statsResult, options);
+        if (result) data.push(result);
+      } else if (statsResult.directory) {
+        const more = await read(fullPath, options);
+        data = data.concat(more);
       }
       count--;
-      if (count === 0) resolve(true)
+      if (count === 0) resolve(data)
     });
   });
 }
 
-async function processFile (fullPath, result) {
+async function processFile (fullPath, result, {lower, upper, src, web}) {
   const size = Math.round(result.size / 1024);
-  if (/\.(jpeg|jpg|png)$/.test(fullPath) && size >= _lowerLimit && size <= _upperLimit) {
-    const srcfile = fullPath.replace(_srclocation, '');
-    const webfile = path.join(_weblocation, srcfile);
+  if (/\.(jpeg|jpg|png)$/.test(fullPath) && size >= lower && size <= upper) {
+    const srcfile = fullPath.replace(src, '');
+    const webfile = path.join(web, srcfile);
     const webstats = await stats(webfile);
     const websize = Math.round(webstats.size / 1024);
     const percent = Math.round(websize / size * 100);
     const diff = await difference(fullPath, webfile);
-    _data.push({size, websize, percent, diff, file: srcfile});
+    return {size, websize, percent, diff, file: srcfile};
   }
+  return null;
 }
 
 function pad (arg, len) {

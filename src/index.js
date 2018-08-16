@@ -9,7 +9,6 @@ if (process.argv[2]) {
   let src = process.argv[4];
   let web = process.argv[5];
   let terminal = true;
-
   try {
     if (fs.lstatSync(web).isDirectory() && fs.lstatSync(src).isDirectory() && limit) {
       entry({src, web, limit, preview, terminal});
