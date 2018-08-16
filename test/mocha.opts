@@ -1,0 +1,5 @@
+--recursive
+--bail
+--reporter dot
+--require test/bootstrap
+--exit

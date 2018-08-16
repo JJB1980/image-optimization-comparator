@@ -1,15 +1,15 @@
-const entry = require('./');
+const start = require('./');
 
-start();
+// begin();
 
-async function start () {
-  const data = await entry({
-    web: '/src/images',
-    src: '/web/images',
-    limit: '420-500',
-    terminal: false,
+async function begin () {
+  const data = await start({
+    src: '/Users/john/grit/github.cwx.io/poker/webclient-themes/src/assets/casino',
+    web: '/Users/john/grit/github.cwx.io/poker/webclient-themes/web/casino',
+    limit: '100-1000',
+    terminal: true,
     preview: false
   });
 
-  console.log(data);
+  // console.log(data);
 }
