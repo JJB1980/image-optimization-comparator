@@ -8,12 +8,22 @@
     "url": "https://github.com/JJB1980/image-optimization-comparator.git"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "NODE_ENV=test mocha ./test/suite",
+    "coverage": "NODE_ENV=test node_modules/.bin/nyc --all --include 'src/**/*.js*' node_modules/.bin/mocha test/suite"
   },
   "author": "John Bowden <j.j.b1980@live.com>",
   "license": "ISC",
   "dependencies": {
+    "colors": "^1.3.1",
     "opn": "^5.3.0",
     "resemblejs": "^2.10.3"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "dirty-chai": "^2.0.1",
+    "mocha": "^5.2.0",
+    "nyc": "^12.0.2",
+    "sinon": "^6.1.5",
+    "sinon-chai": "^3.2.0"
   }
 }
