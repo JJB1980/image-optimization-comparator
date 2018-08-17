@@ -1,10 +1,10 @@
-const fs = require('fs');
-const path = require('path');
-const opn = require('opn');
-const resemble = require('resemblejs');
 const colors = require('colors');
+const fs = require('fs');
+const opn = require('opn');
+const path = require('path');
+const resemble = require('resemblejs');
 
-const isTest = process.env.NODE_ENV === 'test';
+const _isTest = process.env.NODE_ENV === 'test';
 
 function entry (options) {
   const {src, web, limit} = options;
@@ -19,31 +19,48 @@ async function start (options) {
   try {
     if (options.terminal) console.log('Processing...');
     const data = await read(options.src, options);
-    sorted = sort(data);
+    sorted = sort(data, options);
     if (options.terminal) terminal(sorted);
     if (options.preview) preview(0, sorted, options);
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
   } finally {
     return sorted;
   }
 }
 
-function sort (data) {
-  return data.sort((a, b) => {
-    const [,value1] = a.file.split('/');
-    const [,value2] = b.file.split('/');
-    if (value1 < value2) return -1;
-    if (value1 > value2) return 1;
+function sort (data, {sort = 'file'}) {
+  return data.sort((
+    {size: sa, file: fa, percent: pa},
+    {size: sb, file: fb, percent: pb}
+  ) => {
+    switch (sort) {
+      case 'file':
+        if (fa < fb) return -1;
+        if (fa > fb) return 1;
+        break;
+      case 'size':
+        if (sa < sb) return -1;
+        if (sa > sb) return 1;
+        break;
+      case 'percent':
+        if (pa < pb) return -1;
+        if (pa > pb) return 1;
+        break;
+    }
     return 0;
   });
 }
 
 function terminal (data) {
   data.forEach(({size, websize, percent, diff, file}) => {
-    console.log(`${pad(size, 3).yellow}  ${pad(websize, 3).blue}  ${`${pad(percent, 2)}%`.cyan}  ${pad(diff, 4).red} ${file.green}`);
+    console.log(`${pad(size, 3).yellow}  ${pad(websize, 3).blue}  ${`${pad(percent, 2)}%`.cyan}  ${pad(diff, 4).red}  ${file.green}`);
   });
   console.log(`${data.length} files found.`);
+}
+
+function pad (arg, len) {
+  return arg.toString().padStart(len, ' ');
 }
 
 function preview (index, data, options) {
@@ -51,8 +68,8 @@ function preview (index, data, options) {
   const {src, web} = options;
   const {file} = data[index];
   Promise.all([
-    isTest ? Promise.resolve(true) : opn(`${src}${file}`, {wait: true}),
-    isTest ? Promise.resolve(true) : opn(`${web}${file}`, {wait: true})
+    _isTest ? Promise.resolve(true) : opn(`${src}${file}`, {wait: true}),
+    _isTest ? Promise.resolve(true) : opn(`${web}${file}`, {wait: true})
   ]).then(() => {
     preview(index + 1, data, options);
   });
@@ -60,7 +77,7 @@ function preview (index, data, options) {
 
 async function read (loc, options) {
   let data = [];
-  return new Promise(async (resolve, reject) => {
+  return new Promise(async resolve => {
     const files = await readDir(loc);
     let count = files.length;
     files.forEach(async (file, index, array) => {
@@ -93,14 +110,10 @@ async function processFile (fullPath, result, {lower, upper, src, web}) {
   return null;
 }
 
-function pad (arg, len) {
-  return arg.toString().padStart(len, ' ');
-}
-
 function stats (file) {
   return new Promise((resolve, reject) => {
-    fs.stat(file, (err, stat) => {
-      if (err || !stat) reject({err: err || 'no stats.'});
+    fs.stat(file, (error, stat) => {
+      if (error || !stat) reject({error: error || 'no stats.'});
       resolve({
         file: stat.isFile(),
         directory: stat.isDirectory(),
@@ -111,7 +124,7 @@ function stats (file) {
 }
 
 function difference (src, web) {
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     resemble(src).compareTo(web).onComplete(data => {
       resolve(data.misMatchPercentage);
     })
@@ -120,9 +133,9 @@ function difference (src, web) {
 
 function readDir (dir) {
   return new Promise((resolve, reject) => {
-    fs.readdir(dir, (err, files) => {
-      if (err) reject({err});
-      resolve(files);
+    fs.readdir(dir, (error, files) => {
+      if (error) reject({error});
+      resolve(files.filter(item => item !== '.DS_Store'));
     });
   });
 }
