@@ -1,6 +1,7 @@
 # Image optimization comparator app.
 
 An app to compare the size of source images to the output of an optimization plugin run at build time.
+FOr example, pair with [copy-webpack-plugin](https://github.com/webpack-contrib/copy-webpack-plugin) and [imagemin-webpack-plugin](https://github.com/Klathmon/imagemin-webpack-plugin)
 
 ## Getting Started
 
@@ -8,21 +9,23 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Installing
 
+npm:
 ```
-npm i --save image-optimization-comparator
+npm i --save-dev image-optimization-comparator
 ```
 
+yarn:
 ```
-yarn add image-optimization-comparator
+yarn add -D image-optimization-comparator
 ```
 
 See example.js for an example of running the app.  Alternatively run from the command line.
 ```
-node [script] [file size range e.g. 100-400] [preview switch: -p on -x off] [src directory] [web directory]
+node [script] [file size range e.g. 100-400] [preview switch: -p on -x off] [sort=file/size/percent] [src directory] [web directory]
 ```
 e.g.
 ```
-node example 100-400 -x /src/ /web/
+node example 100-400 -p file /src/ /web/
 ```
 
 ## Authors
