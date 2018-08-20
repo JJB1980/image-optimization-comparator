@@ -1,20 +1,14 @@
 /* istanbul ignore file */
-const fs = require('fs');
-
 const {entry} = require('./api');
 
 if (process.argv[2]) {
-  let limit = process.argv[2];
-  let preview = process.argv[3] === '-p';
-  let sort = process.argv[4];
-  let src = process.argv[5];
-  let web = process.argv[6];
-  let terminal = true;
-  try {
-    if (fs.lstatSync(web).isDirectory() && fs.lstatSync(src).isDirectory() && limit) {
-      entry({src, web, limit, sort, preview, terminal});
-    }
-  } catch (e) {}
+  const limit = process.argv[2];
+  const preview = process.argv[3] === '-p';
+  const sort = process.argv[4];
+  const src = process.argv[5];
+  const web = process.argv[6];
+  const terminal = true;
+  entry({src, web, limit, sort, preview, terminal});
 }
 
 function start (options = {}) {
