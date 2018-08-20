@@ -10,23 +10,23 @@ function entry (options) {
   const {src, web, limit} = options;
   let [lower, upper] = limit.split('-');
   upper = upper || lower;
-  if (!src || !web || !lower) return;
-  return start(Object.assign(options, {lower, upper}));
+  try {
+    if (!fs.existsSync(src) || !fs.existsSync(web) || !lower) return;
+    return start(Object.assign(options, {lower, upper}));
+  } catch (error) {
+    console.log(error);
+    return [];
+  }
 }
 
 async function start (options) {
-  let sorted = null;
-  try {
-    if (options.terminal) console.log('Processing...');
-    const data = await read(options.src, options);
-    sorted = sort(data, options);
-    if (options.terminal) terminal(sorted);
-    if (options.preview) preview(0, sorted, options);
-  } catch (error) {
-    console.log(error);
-  } finally {
-    return sorted;
-  }
+  const {terminal: term, src, preview: prev} = options;
+  if (term) console.log('Processing...');
+  const data = await read(src, options);
+  const sorted = sort(data, options);
+  if (term) terminal(sorted);
+  if (prev) preview(0, sorted, options);
+  return sorted;
 }
 
 function sort (data, {sort = 'file'}) {
@@ -96,16 +96,17 @@ async function read (loc, options) {
   });
 }
 
-async function processFile (fullPath, result, {lower, upper, src, web}) {
+async function processFile (srcfile, result, {lower, upper, src, web}) {
   const size = Math.round(result.size / 1024);
-  if (/\.(jpeg|jpg|png)$/.test(fullPath) && size >= lower && size <= upper) {
-    const srcfile = fullPath.replace(src, '');
-    const webfile = path.join(web, srcfile);
+  if (/\.(jpeg|jpg|png)$/.test(srcfile) && size >= lower && size <= upper) {
+    const file = srcfile.replace(src, '');
+    const webfile = path.join(web, file);
+    if (!fs.existsSync(webfile)) return null;
     const webstats = await stats(webfile);
     const websize = Math.round(webstats.size / 1024);
     const percent = Math.round(websize / size * 100);
-    const diff = await difference(fullPath, webfile);
-    return {size, websize, percent, diff, file: srcfile};
+    const diff = await difference(srcfile, webfile);
+    return {size, websize, percent, diff, file};
   }
   return null;
 }
