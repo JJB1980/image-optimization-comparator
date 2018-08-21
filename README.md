@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/JJB1980/image-optimization-comparator.svg?branch=master)](https://travis-ci.com/JJB1980/image-optimization-comparator)
+
 # Image optimization comparator app.
 
 An app to compare the size of source images to the output of an optimization plugin run at build time.
