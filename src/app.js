@@ -8,7 +8,7 @@ const _isTest = process.env.NODE_ENV === 'test';
 
 function entry (options) {
   const {src, web, limit} = options;
-  let [lower, upper] = limit.split('-');
+  let [lower, upper] = limit.split('-').map(val => parseInt(val));
   upper = upper || lower;
   try {
     if (!fs.existsSync(src) || !fs.existsSync(web) || !lower) return;
@@ -54,7 +54,7 @@ function sort (data, {sort = 'file'}) {
 
 function terminal (data) {
   data.forEach(({size, websize, percent, diff, file}) => {
-    console.log(`${pad(size, 3).yellow}  ${pad(websize, 3).blue}  ${`${pad(percent, 2)}%`.cyan}  ${pad(diff, 4).red}  ${file.green}`);
+    console.log(`${pad(size, 3).yellow}  ${pad(websize, 3).blue}  ${`${pad(percent, 2)}%`.cyan}  ${pad(diff, 4).magenta}  ${file.green}`);
   });
   console.log(`${data.length} files found.`);
 }
@@ -111,9 +111,9 @@ async function processFile (srcfile, result, {lower, upper, src, web}) {
   return null;
 }
 
-function stats (file) {
+function stats (entity) {
   return new Promise((resolve, reject) => {
-    fs.stat(file, (error, stat) => {
+    fs.stat(entity, (error, stat) => {
       if (error || !stat) reject({error: error || 'no stats.'});
       resolve({
         file: stat.isFile(),
