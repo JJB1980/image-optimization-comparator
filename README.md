@@ -21,7 +21,7 @@ yarn add -D image-optimization-comparator
 
 See example.js for an example of running the app.  Alternatively run from the command line.
 ```
-node [script] [file size range e.g. 100-400] [preview switch: -p on -x off] [sort=file/size/percent] [src directory] [web directory]
+node [script] [file size range e.g. 100-400] [preview: -p on/-x off] [sort: file/size/percent] [src directory] [web directory]
 ```
 e.g.
 ```

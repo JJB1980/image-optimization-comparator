@@ -1,5 +1,5 @@
 /* istanbul ignore file */
-const {entry} = require('./api');
+const {entry} = require('./app');
 
 if (process.argv[2]) {
   const limit = process.argv[2];
@@ -11,12 +11,10 @@ if (process.argv[2]) {
   entry({src, web, limit, sort, preview, terminal});
 }
 
-function start (options = {}) {
-  return entry(options);
-}
-
 process.on('unhandledRejection', (reason, promise) => {
   console.log('Unhandled Rejection at:', reason.stack || reason)
 });
 
-module.exports = start;
+module.exports = (options = {}) => {
+  return entry(options);
+};

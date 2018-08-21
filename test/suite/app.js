@@ -1,6 +1,6 @@
 const path = require('path');
 
-const api = require('../../src/api');
+const api = require('../../src/app');
 
 const _options = {
   src: path.join(__dirname, 'images/src'),
@@ -22,7 +22,7 @@ describe('api', () => {
 
   it('should pad the string', () => {
     const test = api.pad('X', 3);
-    expect(test.length).to.equal(3);
+    expect(test).to.equal('  X');
   });
 
   it('should return stats object', async () => {
@@ -39,7 +39,7 @@ describe('api', () => {
       {file: '/bbb', size: 1, percent: 30}
     ];
 
-    it('should sort array on file name', () => {
+    it('should sort on file name', () => {
       const result = api.sort(_data, _options);
       expect(result[0].file).to.equal('/aaa');
       expect(result[4].file).to.equal('/ddd');
@@ -59,18 +59,18 @@ describe('api', () => {
   });
 
   context('with terminal and preview', () => {
-    const _data = [{size: 222, websize: 111, percent: 10, diff: 1, file: 'abc'}];
+    const data = [{size: 222, websize: 111, percent: 10, diff: 1, file: 'abc'}];
 
     it('should write data to console', () => {
       const logStub = sinon.stub(console, 'log');
-      api.terminal(_data);
+      api.terminal(data);
       expect(console.log).to.be.calledTwice()
       logStub.restore();
     });
 
     it('should preview data', () => {
       const resolveStub = sinon.stub(Promise, 'resolve').returns({then: () => {}});
-      api.preview(0, _data, {});
+      api.preview(0, data, {});
       expect(Promise.resolve).to.be.calledWith(true)
       resolveStub.restore();
     });
@@ -91,15 +91,14 @@ describe('api', () => {
     });
 
     it('should not return file info', async () => {
-      const localOptions = Object.assign(_options, {lower: 100, upper: 500});
-      const result = await api.processFile(_file, {size}, localOptions);
+      const result = await api.processFile(_file, {size}, Object.assign(_options, {lower: 100, upper: 500}));
       expect(result).to.be.null();
     });
   });
 
   it('should return stats', async () => {
     const result = await api.stats(_file);
-    expect(result.file).to.equal(true);
+    expect(result.file).to.be.true();
   });
 
   it('should return difference', async () => {
