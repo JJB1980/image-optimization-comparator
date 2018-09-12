@@ -13,11 +13,18 @@ const _options = {
 };
 const _img = `/dummy/carpetBackground.jpg`;
 const _file = path.join(_options.src, _img);
+const _data = [
+  {file: '/ccc', size: 4, websize: 3, percent: 10},
+  {file: '/ccc', size: 4, websize: 3, percent: 20},
+  {file: '/ddd', size: 3, websize: 2, percent: 30},
+  {file: '/aaa', size: 2, websize: 1, percent: 50},
+  {file: '/bbb', size: 1, websize: 1, percent: 30}
+];
 
 describe('api', () => {
   it('should execute entry and return data', async () => {
     const data = await api.entry(_options);
-    expect(data.length).to.equal(2);
+    expect(data.data.length).to.equal(2);
   });
 
   it('should pad the string', () => {
@@ -31,14 +38,6 @@ describe('api', () => {
   });
 
   context('with sort', () => {
-    const _data = [
-      {file: '/ccc', size: 4, percent: 10},
-      {file: '/ccc', size: 4, percent: 20},
-      {file: '/ddd', size: 3, percent: 30},
-      {file: '/aaa', size: 2, percent: 50},
-      {file: '/bbb', size: 1, percent: 30}
-    ];
-
     it('should sort on file name', () => {
       const result = api.sort(_data, _options);
       expect(result[0].file).to.equal('/aaa');
@@ -58,14 +57,27 @@ describe('api', () => {
     });
   });
 
+  it('should aggregate data', () => {
+    const result = api.aggregate(_data);
+    expect(result.size).to.equal(14);
+    expect(result.websize).to.equal(10);
+    expect(result.percent).to.equal(71);
+  });
+
   context('with terminal and preview', () => {
     const data = [{size: 222, websize: 111, percent: 10, diff: 1, file: 'abc'}];
 
-    it('should write data to console', () => {
+    it('should write data to console', async () => {
       const logStub = sinon.stub(console, 'log');
-      api.terminal(data);
-      expect(console.log).to.be.calledTwice()
+      api.terminal(data, {size: 222, websize: 111, percent: 10});
+      const call = console.log;
       logStub.restore();
+      await new Promise((resolve) => {
+        setTimeout(() => {
+          expect(call.getCall(0).args[0]).to.equal('\u001b[33m222\u001b[39m  \u001b[34m111\u001b[39m  \u001b[36m10%\u001b[39m  \u001b[35m   1\u001b[39m  \u001b[32mabc\u001b[39m');
+          resolve(true);
+        }, 100);
+      });
     });
 
     it('should preview data', () => {
