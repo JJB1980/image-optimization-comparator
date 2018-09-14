@@ -24,9 +24,20 @@ async function start (options) {
   if (term) console.log('Processing...');
   const data = await read(src, options);
   const sorted = sort(data, options);
-  if (term) terminal(sorted);
+  const totals = aggregate(data);
+  if (term) terminal(sorted, totals);
   if (prev) preview(0, sorted, options);
-  return sorted;
+  return {data: sorted, totals};
+}
+
+function aggregate (data) {
+  const totals = data.reduce((accumulator, current) => {
+    accumulator.size += current.size;
+    accumulator.websize += current.websize;
+    return accumulator;
+  }, {size: 0, websize: 0});
+  totals.percent = Math.round(totals.websize / totals.size * 100);
+  return totals;
 }
 
 function sort (data, {sort = 'file'}) {
@@ -52,10 +63,12 @@ function sort (data, {sort = 'file'}) {
   });
 }
 
-function terminal (data) {
+function terminal (data, totals) {
   data.forEach(({size, websize, percent, diff, file}) => {
     console.log(`${pad(size, 3).yellow}  ${pad(websize, 3).blue}  ${`${pad(percent, 2)}%`.cyan}  ${pad(diff, 4).magenta}  ${file.green}`);
   });
+  const {size, websize, percent} = totals;
+  console.log(`Totals: ${pad(size, 3).yellow}  ${pad(websize, 3).blue}  ${`${pad(percent, 2)}%`.cyan}`);
   console.log(`${data.length} files found.`);
 }
 
@@ -151,6 +164,7 @@ module.exports = {
   read,
   preview,
   terminal,
+  aggregate,
   sort,
   start
 };
